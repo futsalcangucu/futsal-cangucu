@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Futsal Canguçu 2026</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    .score-inputs {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: end;
+    }
+    .score-inputs .vs {
+      font-family: var(--f-display);
+      font-size: 1.2rem;
+      color: var(--gold);
+      text-align: center;
+      padding-bottom: 10px;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 26px;
+      margin-bottom: 20px;
+    }
+    .step-num {
+      font-family: var(--f-mono);
+      font-size: .7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 14px;
+    }
+    .step h3 { margin: 0 0 18px; font-family: var(--f-display); text-transform: uppercase; font-size: 1.1rem; }
+    .success-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--f-mono);
+      font-size: .75rem;
+      color: #5EBF7A;
+      background: rgba(94,191,122,.1);
+      border: 1px solid rgba(94,191,122,.25);
+      border-radius: 20px;
+      padding: 3px 10px;
+      opacity: 0;
+      transition: opacity .3s;
+    }
+    .success-badge.show { opacity: 1; }
+
+    /* Preview ticket inside admin */
+    .preview-ticket {
+      background: var(--bg-soft);
+      border: 1px dashed var(--gold-dim);
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 18px;
+      font-family: var(--f-mono);
+      font-size: .8rem;
+    }
+    .preview-ticket .teams {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .preview-ticket .score-pre {
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--gold);
+    }
+    .preview-ticket .right { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="court-lines" aria-hidden="true"></div>
+  <div id="header-root"></div>
+
+  <main>
+    <section>
+      <div class="wrap" style="max-width:700px;">
+        <div class="crumbs">
+          <a href="index.html">Início</a>
+          <span class="sep">/</span>
+          <span>Admin</span>
+        </div>
+
+        <div class="section-head">
+          <h2>Registrar resultado</h2>
+        </div>
+
+        <div class="notice">
+          <strong>Como funciona:</strong> preencha o formulário abaixo, clique em
+          <em>Gerar código</em>, copie o bloco gerado e cole dentro do array
+          <code>jogos: [...]</code> da categoria correspondente em
+          <code>assets/js/data.js</code>. A classificação se atualiza automaticamente.
+        </div>
+
+        <!-- Passo 1: identificar jogo -->
+        <div class="step">
+          <div class="step-num">Passo 1 — Identificação</div>
+          <h3>Qual partida?</h3>
+
+          <div class="admin-grid">
+            <div class="field">
+              <label for="sel-camp">Campeonato</label>
+              <select id="sel-camp" onchange="onCampChange()">
+                <option value="municipal-2026">Campeonato Municipal 2026</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="sel-cat">Categoria</label>
+              <select id="sel-cat" onchange="onCatChange()"></select>
+            </div>
+          </div>
+
+          <div class="admin-grid">
+            <div class="field">
+              <label for="sel-grupo">Grupo</label>
+              <select id="sel-grupo" onchange="onGrupoChange()"></select>
+            </div>
+            <div class="field">
+              <label for="sel-fase">Fase</label>
+              <select id="sel-fase">
+                <option value="classificatoria">Classificatória</option>
+                <option value="quartas">Quartas de final</option>
+                <option value="semifinal">Semifinal</option>
+                <option value="final">Final</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:4px;">
+            <label for="sel-data">Data da partida (opcional)</label>
+            <input type="date" id="sel-data">
+          </div>
+        </div>
+
+        <!-- Passo 2: placar -->
+        <div class="step">
+          <div class="step-num">Passo 2 — Placar</div>
+          <h3>Resultado</h3>
+
+          <div class="score-inputs">
+            <div class="field">
+              <label for="sel-mandante">Mandante</label>
+              <select id="sel-mandante" onchange="updatePreview()"></select>
+            </div>
+            <div class="vs">VS</div>
+            <div class="field">
+              <label for="sel-visitante">Visitante</label>
+              <select id="sel-visitante" onchange="updatePreview()"></select>
+            </div>
+          </div>
+
+          <div class="score-inputs" style="margin-top:14px;">
+            <div class="field">
+              <label for="gol-m">Gols mandante</label>
+              <input type="number" id="gol-m" min="0" value="" placeholder="—" oninput="updatePreview()">
+            </div>
+            <div></div>
+            <div class="field">
+              <label for="gol-v">Gols visitante</label>
+              <input type="number" id="gol-v" min="0" value="" placeholder="—" oninput="updatePreview()">
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div class="preview-ticket" id="preview-ticket">
+            <span style="color:var(--ink-dim);">Pré-visualização</span>
+            <div class="teams">
+              <span id="prev-m">—</span>
+              <span class="score-pre" id="prev-placar">? — ?</span>
+              <span class="right" id="prev-v">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passo 3: cartões (opcional) -->
+        <details class="advanced" style="margin-bottom:20px;">
+          <summary>Cartões (opcional, usados no critério de desempate)</summary>
+          <div style="padding:8px 0 12px;">
+            <div class="admin-grid" style="margin-top:12px;">
+              <div class="field">
+                <label>Amarelos — mandante</label>
+                <input type="number" id="am-m" min="0" value="0">
+              </div>
+              <div class="field">
+                <label>Vermelhos — mandante</label>
+                <input type="number" id="vm-m" min="0" value="0">
+              </div>
+              <div class="field">
+                <label>Amarelos — visitante</label>
+                <input type="number" id="am-v" min="0" value="0">
+              </div>
+              <div class="field">
+                <label>Vermelhos — visitante</label>
+                <input type="number" id="vm-v" min="0" value="0">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <!-- Gerar -->
+        <div class="step">
+          <div class="step-num">Passo 3 — Código</div>
+          <h3>Copie e cole em data.js</h3>
+          <p style="color:var(--ink-dim);font-size:.88rem;margin:0 0 16px;">
+            Após clicar em <strong>Gerar</strong>, cole o bloco dentro de
+            <code>jogos: [...]</code> da categoria selecionada em
+            <code>assets/js/data.js</code>.
+          </p>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
+            <button class="btn" onclick="gerarCodigo()">Gerar código</button>
+            <span class="success-badge" id="copy-badge">✓ Copiado!</span>
+          </div>
+
+          <div class="codebox" id="codebox" style="display:none;">
+            <pre id="codigo-gerado"></pre>
+            <button class="btn small ghost" onclick="copiarCodigo()">Copiar</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script>
+    document.getElementById('header-root').innerHTML = UI.buildHeader('admin.html');
+    document.getElementById('footer-root').innerHTML = UI.buildFooter();
+
+    /* Popula selects dinamicamente */
+    function populateCats() {
+      const campId = document.getElementById('sel-camp').value;
+      const camp   = CAMPEONATOS[campId];
+      const sel    = document.getElementById('sel-cat');
+      sel.innerHTML = Object.values(camp.categorias)
+        .map(c => `<option value="${c.slug}">${c.nome}</option>`).join('');
+      onCatChange();
+    }
+
+    function onCampChange() { populateCats(); }
+
+    function onCatChange() {
+      const campId  = document.getElementById('sel-camp').value;
+      const catSlug = document.getElementById('sel-cat').value;
+      const grupos  = CAMPEONATOS[campId].categorias[catSlug].grupos;
+      const sel     = document.getElementById('sel-grupo');
+      sel.innerHTML = Object.keys(grupos).map(g => `<option value="${g}">Grupo ${g}</option>`).join('');
+      onGrupoChange();
+    }
+
+    function onGrupoChange() {
+      const campId  = document.getElementById('sel-camp').value;
+      const catSlug = document.getElementById('sel-cat').value;
+      const grupo   = document.getElementById('sel-grupo').value;
+      const equipes = CAMPEONATOS[campId].categorias[catSlug].grupos[grupo];
+
+      const m = document.getElementById('sel-mandante');
+      const v = document.getElementById('sel-visitante');
+      const opts = equipes.map(e => `<option value="${e}">${e}</option>`).join('');
+      m.innerHTML = opts;
+      v.innerHTML = opts;
+      if (equipes.length > 1) v.selectedIndex = 1;
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const m = document.getElementById('sel-mandante').value;
+      const v = document.getElementById('sel-visitante').value;
+      const gm = document.getElementById('gol-m').value;
+      const gv = document.getElementById('gol-v').value;
+      document.getElementById('prev-m').textContent = m || '—';
+      document.getElementById('prev-v').textContent = v || '—';
+      document.getElementById('prev-placar').textContent =
+        (gm !== '' && gv !== '') ? `${gm} — ${gv}` : '? — ?';
+    }
+
+    function gerarCodigo() {
+      const campId  = document.getElementById('sel-camp').value;
+      const catSlug = document.getElementById('sel-cat').value;
+      const grupo   = document.getElementById('sel-grupo').value;
+      const fase    = document.getElementById('sel-fase').value;
+      const data    = document.getElementById('sel-data').value;
+      const mandante  = document.getElementById('sel-mandante').value;
+      const visitante = document.getElementById('sel-visitante').value;
+      const gm = document.getElementById('gol-m').value;
+      const gv = document.getElementById('gol-v').value;
+      const amm = Number(document.getElementById('am-m').value || 0);
+      const vmm = Number(document.getElementById('vm-m').value || 0);
+      const amv = Number(document.getElementById('am-v').value || 0);
+      const vmv = Number(document.getElementById('vm-v').value || 0);
+
+      const temPlacar = gm !== '' && gv !== '';
+      const temCartoes = amm || vmm || amv || vmv;
+
+      let obj = `{
+  grupo: "${grupo}",
+  mandante: "${mandante}",
+  visitante: "${visitante}",
+  golsMandante: ${temPlacar ? gm : 'null'},
+  golsVisitante: ${temPlacar ? gv : 'null'},
+  fase: "${fase}",${data ? `\n  data: "${data}",` : ''}${temCartoes ? `
+  cartoesAmarelosMandante: ${amm},
+  cartoesVermelhosMandante: ${vmm},
+  cartoesAmarelosVisitante: ${amv},
+  cartoesVermelhosVisitante: ${vmv},` : ''}
+}`;
+
+      const path = `CAMPEONATOS["${campId}"].categorias.${catSlug}.jogos`;
+      const pre = document.getElementById('codigo-gerado');
+      pre.textContent =
+`// Cole dentro de: ${path}\n// (dentro dos colchetes do array jogos: [...])\n\n${obj}`;
+
+      document.getElementById('codebox').style.display = 'block';
+      pre.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function copiarCodigo() {
+      const txt = document.getElementById('codigo-gerado').textContent;
+      navigator.clipboard.writeText(txt).then(() => {
+        const b = document.getElementById('copy-badge');
+        b.classList.add('show');
+        setTimeout(() => b.classList.remove('show'), 2000);
+      });
+    }
+
+    /* Init */
+    window.onCampChange = onCampChange;
+    window.onCatChange  = onCatChange;
+    window.onGrupoChange = onGrupoChange;
+    window.updatePreview = updatePreview;
+    window.gerarCodigo  = gerarCodigo;
+    window.copiarCodigo = copiarCodigo;
+
+    populateCats();
+  </script>
+</body>
+</html>

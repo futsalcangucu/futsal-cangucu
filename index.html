@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Futsal Canguçu 2026</title>
+  <meta name="description" content="Acompanhe o Campeonato Municipal de Futsal de Canguçu 2026 — resultados, classificação e tabela em tempo real.">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <div class="court-lines" aria-hidden="true"></div>
+  <div id="header-root"></div>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Temporada 2026</p>
+        <h1>Futsal<br><em>Canguçu</em></h1>
+        <p class="lede">
+          Resultados, classificação e tabela ao vivo do Campeonato Municipal
+          de Futsal 2026 — Série Ouro, Prata, Bronze, Veterano, Feminino e Seletiva.
+        </p>
+        <a href="campeonatos.html" class="btn">Ver campeonatos →</a>
+
+        <blockquote class="quote-block">
+          "O talento vence jogos, mas só o trabalho em equipe ganha campeonatos."
+          <cite>Michael Jordan</cite>
+        </blockquote>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <h2><span class="num">—</span> Categorias 2026</h2>
+        </div>
+        <p class="section-sub">
+          Clique em uma categoria para ver grupos, classificação e partidas.
+        </p>
+        <div class="grid" id="cat-cards"></div>
+      </div>
+    </section>
+
+    <section class="alt">
+      <div class="wrap">
+        <div class="section-head">
+          <h2><span class="num">—</span> Regulamento (resumo)</h2>
+        </div>
+        <div class="grid">
+          <div class="card">
+            <div class="tag">Participação</div>
+            <h3>Atleta Canguçu</h3>
+            <p>Comprovação por RG, carteira de trabalho (mín. 3 meses), comprovante de endereço (água + luz) ou talão 15.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Cartões</div>
+            <h3>Suspensão</h3>
+            <p>2 amarelos = 1 jogo. Cartão vermelho = 1 jogo. Amarelos zerados na semifinal/final (exceto vermelhos).</p>
+          </div>
+          <div class="card">
+            <div class="tag">W.O.</div>
+            <h3>Falta ao jogo</h3>
+            <p>15 min de tolerância. Equipe ausente perde por 2×0 e cada atleta ausente deve uma bola de futsal oficial.</p>
+          </div>
+          <div class="card">
+            <div class="tag">Disputa</div>
+            <h3>Empate</h3>
+            <p>Fase mata: cobranças de pênaltis (5). Final Ouro: prorrogação 2×5 min, depois pênaltis.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer-root"></div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script>
+    document.getElementById('header-root').innerHTML = UI.buildHeader('index.html');
+    document.getElementById('footer-root').innerHTML = UI.buildFooter();
+
+    // Renderiza cards de categorias a partir do campeonato disponível
+    const camp = CAMPEONATOS['municipal-2026'];
+    const colors = {
+      ouro:     { accent:'#DCA53E', icon:'🏆' },
+      prata:    { accent:'#C7C7C7', icon:'🥈' },
+      bronze:   { accent:'#C8743C', icon:'🥉' },
+      veterano: { accent:'#6FA37C', icon:'⚽' },
+      feminino: { accent:'#C2598A', icon:'⚽' },
+      seletiva: { accent:'#4E8FB0', icon:'🎟️' }
+    };
+
+    const container = document.getElementById('cat-cards');
+    container.innerHTML = Object.values(camp.categorias).map(cat => {
+      const def = colors[cat.slug] || { accent:'#DCA53E', icon:'⚽' };
+      const totalEquipes = Object.values(cat.grupos).reduce((s, eq) => s + eq.length, 0);
+      const numGrupos    = Object.keys(cat.grupos).length;
+      const jogosRealizados = cat.jogos.filter(j =>
+        j.golsMandante !== null && j.golsMandante !== undefined).length;
+      return `<a href="categoria.html?camp=municipal-2026&cat=${cat.slug}" class="card cat"
+           style="--accent:${def.accent};">
+        <div class="tag">${def.icon} ${camp.nome}</div>
+        <h3>${cat.nome}</h3>
+        <div class="meta">
+          <span>${numGrupos} grupo${numGrupos>1?'s':''}</span>
+          <span>${totalEquipes} equipes</span>
+          <span>${jogosRealizados} resultado${jogosRealizados!==1?'s':''}</span>
+        </div>
+        <div class="go">Ver categoria →</div>
+      </a>`;
+    }).join('');
+  </script>
+</body>
+</html>
